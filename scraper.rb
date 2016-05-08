@@ -3,29 +3,32 @@ require 'mechanize'
 require 'geokit'
 require 'pry'
 
-@indicies = [
-  'conviction_number',
-  'trade_name',
-  'company_name',
-  'address',
-  'convicted_persons_or_company',
-  'relationship_of_person',
-  'conviction_date',
-  'court_decision',
-  'sentence_imposed',
-  'prosecution_brought_by',
-  'description',
-]
+@mappings = {
+  'Conviction number:' => 'conviction_number',
+  'Trade name of food business:' => 'trading_name',
+  'Company name (if applicable):' => 'company_name',
+  'Address of premises where offence(s) occurred:' => 'address',
+  'Name of convicted person(s) or company:' => 'convicted_persons_or_company',
+  'Relationship of convicted person(s) to the business:' => 'relationship_of_person',
+  'Date of conviction:' => 'conviction_date',
+  'Court decision:' => 'court_decision',
+  'Sentence and/or order imposed:' => 'sentence_imposed',
+  'Prosecution brought by or for:' => 'prosecution_brought_by',
+  'Description of offense(s):' => 'description',
+}
 
 def fetch_detail(detail_url)
   details = {}
-  indicies = @indicies.dup
 
   page = @agent.get(detail_url)
   data_list = page.search('div#main div dl').first.children.map {|e| e.text? ? nil : e }.compact
-  indicies.delete(3) if data_list.size == 22
   data_list.each_slice(2).with_index do |(key, value), index|
-    details.merge!({indicies[index] => value.text})
+    dt = key.text
+    if @mappings[dt]
+      details.merge!({@mappings[dt] => value.text})
+    else
+      raise "unknown field for '#{dt}'"
+    end
   end
 
   return details
