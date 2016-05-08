@@ -79,7 +79,7 @@ end
 
 # Serialise
 convictions.each do |conviction|
-  ScraperWiki.save_sqlite(["address"], conviction)
+  ScraperWiki.save_sqlite(['conviction_number'], conviction)
 end
 
 puts "Done"
