@@ -39,9 +39,9 @@ def extract_basic_detail(el)
 
   conviction['trading_name'] = el.at('h3').text.strip
   party, address, council = el.search('div.content em').text.split(/\s*\|\s*/)
-  conviction['party_served'] = party
+  conviction['convicted_persons_or_company'] = party
   conviction['address'] = address
-  conviction['council'] = council
+  conviction['prosecution_brought_by'] = council
 
   return conviction
 end
