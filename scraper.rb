@@ -60,6 +60,7 @@ elements.each do |el|
   detail_url = el.search('a').first['href']
   details    = fetch_detail(detail_url)
   conviction.merge!(details)
+  conviction.merge!({'link' => detail_url})
 
   convictions << conviction
 end
