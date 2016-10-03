@@ -1,6 +1,8 @@
 require 'scraperwiki'
 require 'mechanize'
 require 'geokit'
+require 'active_support'
+require 'active_support/core_ext'
 require 'pry'
 
 # Set an API key if provided
@@ -29,7 +31,8 @@ def fetch_detail(detail_url)
   data_list.each_slice(2).with_index do |(key, value), index|
     dt = key.text
     if @mappings[dt]
-      details.merge!({@mappings[dt] => value.text})
+      val = value.text.blank? ? nil : value.text
+      details.merge!({@mappings[dt] => val})
     else
       raise "unknown field for '#{dt}'"
     end
