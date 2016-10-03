@@ -18,6 +18,7 @@ Geokit::Geocoders::GoogleGeocoder.api_key = ENV['MORPH_GOOGLE_API_KEY'] if ENV['
   'Sentence and/or order imposed:' => 'sentence_imposed',
   'Prosecution brought by or for:' => 'prosecution_brought_by',
   'Description of offense(s):' => 'description',
+  'Court:' => 'court',
 }
 
 def fetch_detail(detail_url)
