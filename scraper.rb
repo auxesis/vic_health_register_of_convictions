@@ -89,7 +89,7 @@ def geocode(notice)
 end
 
 def base
-  "https://www2.health.vic.gov.au/public-health/food-safety/convictions-register"
+  'https://www2.health.vic.gov.au/public-health/food-safety/convictions-register'
 end
 
 def existing_record_ids
@@ -143,7 +143,7 @@ def main
   # Serialise
   ScraperWiki.save_sqlite(['link'], new_convictions)
 
-  puts "Done"
+  puts 'Done'
 end
 
 main()
