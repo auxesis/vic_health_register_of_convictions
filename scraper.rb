@@ -4,6 +4,7 @@ require 'geokit'
 require 'active_support'
 require 'active_support/core_ext'
 require 'pry'
+require 'reverse_markdown'
 
 # Set an API key if provided
 Geokit::Geocoders::GoogleGeocoder.api_key = ENV['MORPH_GOOGLE_API_KEY'] if ENV['MORPH_GOOGLE_API_KEY']
@@ -39,9 +40,13 @@ def extract_detail(page)
   data_list = page.search('div#main div dl').first.children.map {|e| e.text? ? nil : e }.compact
   data_list.each_slice(2).with_index do |(key, value), index|
     dt = key.text
-    if @mappings[dt]
-      val = value.text.blank? ? nil : value.text
-      details.merge!({@mappings[dt] => val})
+    if field = @mappings[dt]
+      if field == 'description'
+        text = ReverseMarkdown.convert(value.children.map(&:to_s).join)
+      else
+        text = value.text.blank? ? nil : value.text
+      end
+      details.merge!({field => text})
     else
       raise "unknown field for '#{dt}'"
     end
