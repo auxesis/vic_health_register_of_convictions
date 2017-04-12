@@ -31,6 +31,7 @@ end
 
 def get(url)
   @agent ||= Mechanize.new
+  @agent.ca_file = './bundle.pem'
   @agent.get(url)
 end
 
