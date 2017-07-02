@@ -6,6 +6,22 @@ The Act requires that each conviction is to be included in the register for 12 c
 
 This scraper [runs on Morph](https://morph.io/auxesis/vic_health_register_of_convictions). To get started [see Morph's documentation](https://morph.io/documentation).
 
+## Run the scraper locally
+
+Clone and set up the scraper locally:
+
+``` bash
+git clone https://github.com/auxesis/vic_health_register_of_convictions
+cd vic_health_register_of_convictions
+bundle
+```
+
+Then run it:
+
+``` bash
+bundle exec ruby scraper.rb
+```
+
 ## Why is there a custom certificate bundle?
 
 Per the [Qualsys SSL Labs report](https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au), **the intermediate certificate is not sent by the server at www2.health.vic.gov.au**.
