@@ -31,8 +31,17 @@ end
 
 def get(url)
   @agent ||= Mechanize.new
-  @agent.ca_file = './bundle.pem'
-  @agent.get(url)
+  @agent.ca_file = './bundle.pem' if File.exists?('./bundle.pem')
+  begin
+    @agent.get(url)
+  rescue OpenSSL::SSL::SSLError => e
+    puts "[info] There was an SSL error when performing a HTTP GET to #{url}"
+    puts "[info] The error was: #{e.message}"
+    puts "[info] There's a good chance there's a problem with the certificate bundle."
+    puts "[info] Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au"
+    puts "[info] Exiting!"
+    exit(2)
+  end
 end
 
 def extract_detail(page)
