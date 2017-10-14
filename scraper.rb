@@ -5,6 +5,8 @@ require 'active_support'
 require 'active_support/core_ext'
 require 'pry'
 require 'reverse_markdown'
+require 'dotenv'
+Dotenv.load
 
 # Set an API key if provided
 Geokit::Geocoders::GoogleGeocoder.api_key = ENV['MORPH_GOOGLE_API_KEY'] if ENV['MORPH_GOOGLE_API_KEY']
