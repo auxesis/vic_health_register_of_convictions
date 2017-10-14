@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'scraperwiki'
 require 'mechanize'
 require 'geokit'
@@ -23,7 +25,7 @@ Geokit::Geocoders::GoogleGeocoder.api_key = ENV['MORPH_GOOGLE_API_KEY'] if ENV['
   'Sentence and/or order imposed:' => 'sentence_imposed',
   'Prosecution brought by or for:' => 'prosecution_brought_by',
   'Description of offense(s):' => 'description',
-  'Court:' => 'court',
+  'Court:' => 'court'
 }
 
 def scrub(text)
@@ -33,15 +35,15 @@ end
 
 def get(url)
   @agent ||= Mechanize.new
-  @agent.ca_file = './bundle.pem' if File.exists?('./bundle.pem')
+  @agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem')
   begin
     @agent.get(url)
   rescue OpenSSL::SSL::SSLError => e
     info "There was an SSL error when performing a HTTP GET to #{url}"
     info "The error was: #{e.message}"
-    info "There's a good chance there's a problem with the certificate bundle."
-    info "Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au"
-    info "Exiting!"
+    info %(There's a good chance there's a problem with the certificate bundle.)
+    info 'Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au'
+    info 'Exiting!'
     exit(2)
   end
 end
@@ -49,8 +51,8 @@ end
 def extract_detail(page)
   details = {}
 
-  data_list = page.search('div#main div dl').first.children.map {|e| e.text? ? nil : e }.compact
-  data_list.each_slice(2).with_index do |(key, value), index|
+  data_list = page.search('div#main div dl').first.children.map { |e| e.text? ? nil : e }.compact
+  data_list.each_slice(2).with_index do |(key, value), _index|
     dt = key.text
     if field = @mappings[dt]
       if field == 'description'
@@ -58,13 +60,13 @@ def extract_detail(page)
       else
         text = value.text.blank? ? nil : value.text
       end
-      details.merge!({field => text})
+      details[field] = text
     else
       raise "unknown field for '#{dt}'"
     end
   end
 
-  return details
+  details
 end
 
 def extract_notices(page)
@@ -105,7 +107,7 @@ def geocode(notice)
     a = Geokit::Geocoders::GoogleGeocoder.geocode(address)
     location = {
       'lat' => a.lat,
-      'lng' => a.lng,
+      'lng' => a.lng
     }
 
     @addresses[address] = location
@@ -120,7 +122,7 @@ end
 
 def existing_record_ids
   return @cached if @cached
-  @cached = ScraperWiki.select('link from data').map {|r| r['link']}
+  @cached = ScraperWiki.select('link from data').map { |r| r['link'] }
 rescue SqliteMagic::NoSuchTable
   []
 end
@@ -133,8 +135,7 @@ def extract_basic_detail(el)
   conviction['convicted_persons_or_company'] = party
   conviction['address'] = address
   conviction['prosecution_brought_by'] = council
-
-  return conviction
+  conviction
 end
 
 def extract_convictions(page)
@@ -146,7 +147,7 @@ def extract_convictions(page)
     conviction = extract_basic_detail(el)
 
     detail_url = el.search('a').first['href']
-    conviction.merge!({'link' => detail_url})
+    conviction['link'] = detail_url
 
     convictions << conviction
   end
@@ -154,18 +155,17 @@ def extract_convictions(page)
   convictions
 end
 
-
 def main
   page = get(base)
 
   convictions = extract_convictions(page)
   info "There are #{existing_record_ids.size} existing records that have been scraped"
   info "There are #{convictions.size} records at #{base}"
-  new_convictions = convictions.select {|r| !existing_record_ids.include?(r['link']) }
+  new_convictions = convictions.reject { |r| existing_record_ids.include?(r['link']) }
   info "There are #{new_convictions.size} records we haven't seen before at #{base}"
 
-  new_convictions.map! {|c| build_conviction(c) }
-  new_convictions.map! {|c| geocode(c) }
+  new_convictions.map! { |c| build_conviction(c) }
+  new_convictions.map! { |c| geocode(c) }
 
   # Serialise
   ScraperWiki.save_sqlite(['link'], new_convictions)
@@ -173,4 +173,4 @@ def main
   info 'Done'
 end
 
-main()
+main if $PROGRAM_NAME == __FILE__
