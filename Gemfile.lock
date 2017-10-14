@@ -49,6 +49,7 @@ GEM
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
       slop (~> 3.4)
+    rake (12.1.0)
     reverse_markdown (1.0.3)
       nokogiri
     slop (3.6.0)
@@ -72,6 +73,7 @@ DEPENDENCIES
   geokit
   mechanize
   pry
+  rake
   reverse_markdown
   scraperwiki!
 
