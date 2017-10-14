@@ -37,11 +37,11 @@ def get(url)
   begin
     @agent.get(url)
   rescue OpenSSL::SSL::SSLError => e
-    puts "[info] There was an SSL error when performing a HTTP GET to #{url}"
-    puts "[info] The error was: #{e.message}"
-    puts "[info] There's a good chance there's a problem with the certificate bundle."
-    puts "[info] Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au"
-    puts "[info] Exiting!"
+    info "There was an SSL error when performing a HTTP GET to #{url}"
+    info "The error was: #{e.message}"
+    info "There's a good chance there's a problem with the certificate bundle."
+    info "Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au"
+    info "Exiting!"
     exit(2)
   end
 end
@@ -75,10 +75,18 @@ def extract_notices(page)
   notices
 end
 
+def debug(msg)
+  puts '[debug] ' + msg
+end
+
+def info(msg)
+  puts '[info] ' + msg
+end
+
 def build_conviction(conviction)
   page    = get(conviction['link'])
   details = extract_detail(page)
-  puts "Extracting #{details['address']}"
+  debug "Extracting #{conviction['link']}"
 
   conviction.merge!(details)
 end
@@ -87,12 +95,13 @@ def geocode(notice)
   @addresses ||= {}
 
   address = notice['address']
+  link = notice['link']
 
   if @addresses[address]
-    puts "Geocoding [cache hit] #{address}"
+    debug "Geocoding [cache hit] '#{address}' for #{link}"
     location = @addresses[address]
   else
-    puts "Geocoding #{address}"
+    debug "Geocoding '#{address}' for #{link}"
     a = Geokit::Geocoders::GoogleGeocoder.geocode(address)
     location = {
       'lat' => a.lat,
@@ -150,9 +159,10 @@ def main
   page = get(base)
 
   convictions = extract_convictions(page)
-  puts "### Found #{convictions.size} convictions"
+  info "There are #{existing_record_ids.size} existing records that have been scraped"
+  info "There are #{convictions.size} records at #{base}"
   new_convictions = convictions.select {|r| !existing_record_ids.include?(r['link']) }
-  puts "### There are #{new_convictions.size} new convictions"
+  info "There are #{new_convictions.size} records we haven't seen before at #{base}"
 
   new_convictions.map! {|c| build_conviction(c) }
   new_convictions.map! {|c| geocode(c) }
@@ -160,7 +170,7 @@ def main
   # Serialise
   ScraperWiki.save_sqlite(['link'], new_convictions)
 
-  puts 'Done'
+  info 'Done'
 end
 
 main()
