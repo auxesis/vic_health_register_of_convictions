@@ -10,23 +10,24 @@ require 'reverse_markdown'
 require 'dotenv'
 Dotenv.load
 
-# Set an API key if provided
-Geokit::Geocoders::GoogleGeocoder.api_key = ENV['MORPH_GOOGLE_API_KEY'] if ENV['MORPH_GOOGLE_API_KEY']
-
-@mappings = {
-  'Conviction number:' => 'conviction_number',
-  'Trade name of food business:' => 'trading_name',
-  'Company name (if applicable):' => 'company_name',
-  'Address of premises where offence(s) occurred:' => 'address',
-  'Name of convicted person(s) or company:' => 'convicted_persons_or_company',
-  'Relationship of convicted person(s) to the business:' => 'relationship_of_person',
-  'Date of conviction:' => 'conviction_date',
-  'Court decision:' => 'court_decision',
-  'Sentence and/or order imposed:' => 'sentence_imposed',
-  'Prosecution brought by or for:' => 'prosecution_brought_by',
-  'Description of offense(s):' => 'description',
-  'Court:' => 'court'
-}
+# rubocop:disable Metrics/MethodLength
+def mappings
+  {
+    'Conviction number:' => 'conviction_number',
+    'Trade name of food business:' => 'trading_name',
+    'Company name (if applicable):' => 'company_name',
+    'Address of premises where offence(s) occurred:' => 'address',
+    'Name of convicted person(s) or company:' => 'convicted_persons_or_company',
+    'Relationship of convicted person(s) to the business:' => 'relationship_of_person',
+    'Date of conviction:' => 'conviction_date',
+    'Court decision:' => 'court_decision',
+    'Sentence and/or order imposed:' => 'sentence_imposed',
+    'Prosecution brought by or for:' => 'prosecution_brought_by',
+    'Description of offense(s):' => 'description',
+    'Court:' => 'court'
+  }
+end
+# rubocop:enable Metrics/MethodLength
 
 def scrub(text)
   text.gsub!(/[[:space:]]/, ' ') # convert all utf whitespace to simple space
@@ -61,35 +62,6 @@ def get(url)
   end
 end
 
-def extract_detail(page)
-  details = {}
-
-  data_list = page.search('div#main div dl').first.children.map { |e| e.text? ? nil : e }.compact
-  data_list.each_slice(2).with_index do |(key, value), _index|
-    dt = key.text
-    if field = @mappings[dt]
-      if field == 'description'
-        text = ReverseMarkdown.convert(value.children.map(&:to_s).join)
-      else
-        text = value.text.blank? ? nil : value.text
-      end
-      details[field] = text
-    else
-      raise "unknown field for '#{dt}'"
-    end
-  end
-
-  details
-end
-
-def extract_notices(page)
-  notices = []
-  page.search('div.contentInfo div.table-container tbody tr').each do |el|
-    notices << { 'link' => "#{base}#{el.search('a').first['href']}" }
-  end
-  notices
-end
-
 def debug(msg)
   puts '[debug] ' + msg
 end
@@ -98,12 +70,30 @@ def info(msg)
   puts '[info] ' + msg
 end
 
-def build_conviction(conviction)
-  page    = get(conviction['link'])
-  details = extract_detail(page)
-  debug "Extracting #{conviction['link']}"
+def build_key_value_from_mapping(key, value)
+  field = mappings[key.text]
+  raise "unknown field for '#{key.text}'" unless field
+  text = if field == 'description'
+           ReverseMarkdown.convert(value.children.map(&:to_s).join)
+         else
+           value.text.blank? ? nil : value.text
+         end
+  [field, text]
+end
 
-  conviction.merge!(details)
+def extract_detail_elements(page)
+  page.search('div#main div dl').first.children.map { |e| e.text? ? nil : e }.compact
+end
+
+def scrape_conviction(record)
+  debug "Extracting #{record['link']}"
+
+  page = get(record['link'])
+  details = extract_detail_elements(page).each_slice(2).map do |(key, value)|
+    build_key_value_from_mapping(key, value)
+  end
+
+  record.merge!(Hash[details])
 end
 
 def geocode_cache(address, value = nil)
@@ -160,7 +150,7 @@ def main
   records = new_convictions
   info "There are #{records.size} records we haven't seen before at #{base}"
   # Scrape details new records
-  records.map! { |r| build_conviction(r) }
+  records.map! { |r| scrape_conviction(r) }
   records.map! { |r| geocode(r) }
   # Save new records
   ScraperWiki.save_sqlite(['link'], records)
