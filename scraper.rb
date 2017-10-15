@@ -158,10 +158,12 @@ def extract_basic_detail(el)
   conviction
 end
 
-def extract_convictions(page)
-  convictions = []
+def convictions
+  return @convictions if @convictions
+  @convictions = []
 
-  # Build up basic records
+  page = get(base)
+  # Build index of conviction records
   elements = page.search('div.listing-container ol li')
   elements.each do |el|
     conviction = extract_basic_detail(el)
@@ -169,16 +171,14 @@ def extract_convictions(page)
     detail_url = el.search('a').first['href']
     conviction['link'] = detail_url
 
-    convictions << conviction
+    @convictions << conviction
   end
 
-  convictions
+  @convictions
 end
 
 def main
-  page = get(base)
-
-  convictions = extract_convictions(page)
+  # Check for new convictions
   info "There are #{existing_record_ids.size} existing records that have been scraped"
   info "There are #{convictions.size} records at #{base}"
   new_convictions = convictions.reject { |r| existing_record_ids.include?(r['link']) }
