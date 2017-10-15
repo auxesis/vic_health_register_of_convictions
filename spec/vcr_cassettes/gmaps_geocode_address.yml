@@ -1,0 +1,112 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://maps.google.com/maps/api/geocode/json?address=333%20George%20Street%20Sydney%202000&sensor=false
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Sun, 15 Oct 2017 08:20:43 GMT
+      Expires:
+      - Mon, 16 Oct 2017 08:20:43 GMT
+      Cache-Control:
+      - public, max-age=86400
+      Vary:
+      - Accept-Language
+      Access-Control-Allow-Origin:
+      - "*"
+      Server:
+      - mafe
+      Content-Length:
+      - '517'
+      X-Xss-Protection:
+      - 1; mode=block
+      X-Frame-Options:
+      - SAMEORIGIN
+      Alt-Svc:
+      - quic=":443"; ma=2592000; v="39,38,37,35"
+    body:
+      encoding: ASCII-8BIT
+      string: |
+        {
+           "results" : [
+              {
+                 "address_components" : [
+                    {
+                       "long_name" : "333",
+                       "short_name" : "333",
+                       "types" : [ "street_number" ]
+                    },
+                    {
+                       "long_name" : "George Street",
+                       "short_name" : "George St",
+                       "types" : [ "route" ]
+                    },
+                    {
+                       "long_name" : "Sydney",
+                       "short_name" : "Sydney",
+                       "types" : [ "locality", "political" ]
+                    },
+                    {
+                       "long_name" : "Council of the City of Sydney",
+                       "short_name" : "Sydney",
+                       "types" : [ "administrative_area_level_2", "political" ]
+                    },
+                    {
+                       "long_name" : "New South Wales",
+                       "short_name" : "NSW",
+                       "types" : [ "administrative_area_level_1", "political" ]
+                    },
+                    {
+                       "long_name" : "Australia",
+                       "short_name" : "AU",
+                       "types" : [ "country", "political" ]
+                    },
+                    {
+                       "long_name" : "2000",
+                       "short_name" : "2000",
+                       "types" : [ "postal_code" ]
+                    }
+                 ],
+                 "formatted_address" : "333 George St, Sydney NSW 2000, Australia",
+                 "geometry" : {
+                    "location" : {
+                       "lat" : -33.8668093,
+                       "lng" : 151.2070304
+                    },
+                    "location_type" : "ROOFTOP",
+                    "viewport" : {
+                       "northeast" : {
+                          "lat" : -33.8654603197085,
+                          "lng" : 151.2083793802915
+                       },
+                       "southwest" : {
+                          "lat" : -33.8681582802915,
+                          "lng" : 151.2056814197085
+                       }
+                    }
+                 },
+                 "place_id" : "ChIJzaqvMjyuEmsRAhJ6SUwn-q8",
+                 "types" : [ "street_address" ]
+              }
+           ],
+           "status" : "OK"
+        }
+    http_version:
+  recorded_at: Sun, 15 Oct 2017 08:20:43 GMT
+recorded_with: VCR 3.0.3

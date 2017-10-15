@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'scraperwiki'
 require 'mechanize'
 require 'geokit'
@@ -8,91 +10,56 @@ require 'reverse_markdown'
 require 'dotenv'
 Dotenv.load
 
-# Set an API key if provided
-Geokit::Geocoders::GoogleGeocoder.api_key = ENV['MORPH_GOOGLE_API_KEY'] if ENV['MORPH_GOOGLE_API_KEY']
-
-@mappings = {
-  'Conviction number:' => 'conviction_number',
-  'Trade name of food business:' => 'trading_name',
-  'Company name (if applicable):' => 'company_name',
-  'Address of premises where offence(s) occurred:' => 'address',
-  'Name of convicted person(s) or company:' => 'convicted_persons_or_company',
-  'Relationship of convicted person(s) to the business:' => 'relationship_of_person',
-  'Date of conviction:' => 'conviction_date',
-  'Court decision:' => 'court_decision',
-  'Sentence and/or order imposed:' => 'sentence_imposed',
-  'Prosecution brought by or for:' => 'prosecution_brought_by',
-  'Description of offense(s):' => 'description',
-  'Court:' => 'court',
-}
+# rubocop:disable Metrics/MethodLength
+def mappings
+  {
+    'Conviction number:' => 'conviction_number',
+    'Trade name of food business:' => 'trading_name',
+    'Company name (if applicable):' => 'company_name',
+    'Address of premises where offence(s) occurred:' => 'address',
+    'Name of convicted person(s) or company:' => 'convicted_persons_or_company',
+    'Relationship of convicted person(s) to the business:' => 'relationship_of_person',
+    'Date of conviction:' => 'conviction_date',
+    'Court decision:' => 'court_decision',
+    'Sentence and/or order imposed:' => 'sentence_imposed',
+    'Prosecution brought by or for:' => 'prosecution_brought_by',
+    'Description of offense(s):' => 'description',
+    'Court:' => 'court'
+  }
+end
+# rubocop:enable Metrics/MethodLength
 
 def scrub(text)
   text.gsub!(/[[:space:]]/, ' ') # convert all utf whitespace to simple space
   text.strip
 end
 
+def agent
+  @agent ||= Mechanize.new
+end
+
 def save_to_wayback_machine(url)
   debug "Saving #{url} to the Wayback Machine."
-  require 'net/http'
-
   save_url = 'http://web.archive.org/save/' + url
-  uri = URI(save_url)
-
-  Net::HTTP.start(uri.host, uri.port) do |http|
-    request = Net::HTTP::Get.new(uri)
-    response = http.request(request)
-    unless response.kind_of? Net::HTTPSuccess
-      info("Attempt to save #{url} to Wayback Machine failed.")
-      info("Exiting!")
-      exit(2)
-    end
-  end
+  agent.get(save_url)
+rescue Mechanize::Error => e
+  info("Attempt to save #{url} to Wayback Machine failed.")
+  info(e.message)
+  info('Exiting!')
+  exit(2)
 end
 
 def get(url)
-  @agent ||= Mechanize.new
-  @agent.ca_file = './bundle.pem' if File.exists?('./bundle.pem')
+  agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem')
   begin
-    response = @agent.get(url)
     save_to_wayback_machine(url)
-    return response
+    agent.get(url)
   rescue OpenSSL::SSL::SSLError => e
-    info "There was an SSL error when performing a HTTP GET to #{url}"
-    info "The error was: #{e.message}"
-    info "There's a good chance there's a problem with the certificate bundle."
-    info "Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au"
-    info "Exiting!"
+    info "There was an SSL error when performing a HTTP GET to #{url}: #{e.message}"
+    info %(There's a good chance there's a problem with the certificate bundle.)
+    info 'Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au'
     exit(2)
   end
-end
-
-def extract_detail(page)
-  details = {}
-
-  data_list = page.search('div#main div dl').first.children.map {|e| e.text? ? nil : e }.compact
-  data_list.each_slice(2).with_index do |(key, value), index|
-    dt = key.text
-    if field = @mappings[dt]
-      if field == 'description'
-        text = ReverseMarkdown.convert(value.children.map(&:to_s).join)
-      else
-        text = value.text.blank? ? nil : value.text
-      end
-      details.merge!({field => text})
-    else
-      raise "unknown field for '#{dt}'"
-    end
-  end
-
-  return details
-end
-
-def extract_notices(page)
-  notices = []
-  page.search('div.contentInfo div.table-container tbody tr').each do |el|
-    notices << { 'link' => "#{base}#{el.search('a').first['href']}" }
-  end
-  notices
 end
 
 def debug(msg)
@@ -103,35 +70,53 @@ def info(msg)
   puts '[info] ' + msg
 end
 
-def build_conviction(conviction)
-  page    = get(conviction['link'])
-  details = extract_detail(page)
-  debug "Extracting #{conviction['link']}"
-
-  conviction.merge!(details)
+def build_key_value_from_mapping(key, value)
+  field = mappings[key.text]
+  raise "unknown field for '#{key.text}'" unless field
+  text = if field == 'description'
+           ReverseMarkdown.convert(value.children.map(&:to_s).join)
+         else
+           value.text.blank? ? nil : value.text
+         end
+  [field, text]
 end
 
-def geocode(notice)
-  @addresses ||= {}
+def extract_detail_elements(page)
+  page.search('div#main div dl').first.children.map { |e| e.text? ? nil : e }.compact
+end
 
-  address = notice['address']
-  link = notice['link']
+def scrape_conviction(record)
+  debug "Extracting #{record['link']}"
 
-  if @addresses[address]
-    debug "Geocoding [cache hit] '#{address}' for #{link}"
-    location = @addresses[address]
-  else
-    debug "Geocoding '#{address}' for #{link}"
-    a = Geokit::Geocoders::GoogleGeocoder.geocode(address)
-    location = {
-      'lat' => a.lat,
-      'lng' => a.lng,
-    }
-
-    @addresses[address] = location
+  page = get(record['link'])
+  details = extract_detail_elements(page).each_slice(2).map do |(key, value)|
+    build_key_value_from_mapping(key, value)
   end
 
-  notice.merge!(location)
+  record.merge!(Hash[details])
+end
+
+def geocode_cache(address, value = nil)
+  @cache ||= {}
+  if value
+    @cache[address] = value
+  else
+    @cache[address]
+  end
+end
+
+def geocode(record)
+  address = record['address']
+
+  if geocode_cache(address)
+    location = geocode_cache(address)
+  else
+    response = Geokit::Geocoders::GoogleGeocoder.geocode(address)
+    location = { 'lat' => response.lat, 'lng' => response.lng }
+    geocode_cache(address, location)
+  end
+
+  record.merge!(location)
 end
 
 def base
@@ -140,57 +125,36 @@ end
 
 def existing_record_ids
   return @cached if @cached
-  @cached = ScraperWiki.select('link from data').map {|r| r['link']}
+  @cached = ScraperWiki.select('link from data').map { |r| r['link'] }
 rescue SqliteMagic::NoSuchTable
   []
 end
 
-def extract_basic_detail(el)
-  conviction = {}
-
-  conviction['trading_name'] = el.at('h3').text.strip
-  party, address, council = el.search('div.content em').text.split(/\s*\|\s*/)
-  conviction['convicted_persons_or_company'] = party
-  conviction['address'] = address
-  conviction['prosecution_brought_by'] = council
-
-  return conviction
-end
-
-def extract_convictions(page)
-  convictions = []
-
-  # Build up basic records
-  elements = page.search('div.listing-container ol li')
-  elements.each do |el|
-    conviction = extract_basic_detail(el)
-
-    detail_url = el.search('a').first['href']
-    conviction.merge!({'link' => detail_url})
-
-    convictions << conviction
+# Index of conviction records
+def convictions_index_at_source
+  page = get(base)
+  page.search('div.listing-container ol li').map do |el|
+    { 'link' => el.search('a').first['href'] }
   end
-
-  convictions
 end
 
+def new_convictions
+  info "There are #{existing_record_ids.size} existing records that have been scraped"
+  info "There are #{convictions_index_at_source.size} records at #{base}"
+  convictions_index_at_source.reject { |r| existing_record_ids.include?(r['link']) }
+end
 
 def main
-  page = get(base)
-
-  convictions = extract_convictions(page)
-  info "There are #{existing_record_ids.size} existing records that have been scraped"
-  info "There are #{convictions.size} records at #{base}"
-  new_convictions = convictions.select {|r| !existing_record_ids.include?(r['link']) }
-  info "There are #{new_convictions.size} records we haven't seen before at #{base}"
-
-  new_convictions.map! {|c| build_conviction(c) }
-  new_convictions.map! {|c| geocode(c) }
-
-  # Serialise
-  ScraperWiki.save_sqlite(['link'], new_convictions)
-
+  # Set an API key if provided
+  Geokit::Geocoders::GoogleGeocoder.api_key = ENV['MORPH_GOOGLE_API_KEY'] if ENV['MORPH_GOOGLE_API_KEY']
+  records = new_convictions
+  info "There are #{records.size} records we haven't seen before at #{base}"
+  # Scrape details new records
+  records.map! { |r| scrape_conviction(r) }
+  records.map! { |r| geocode(r) }
+  # Save new records
+  ScraperWiki.save_sqlite(['link'], records)
   info 'Done'
 end
 
-main()
+main if $PROGRAM_NAME == __FILE__

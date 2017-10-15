@@ -1,11 +1,21 @@
+# frozen_string_literal: true
+
 ruby '2.3.1'
 source 'https://rubygems.org'
 
-gem 'scraperwiki', git: 'https://github.com/openaustralia/scraperwiki-ruby.git', branch: 'morph_defaults'
-gem 'mechanize'
-gem 'pry'
-gem 'geokit'
 gem 'activesupport'
-gem 'reverse_markdown'
 gem 'dotenv'
-gem 'rake'
+gem 'geokit'
+gem 'mechanize'
+gem 'reverse_markdown'
+gem 'scraperwiki', git: 'https://github.com/openaustralia/scraperwiki-ruby.git', branch: 'morph_defaults'
+
+group :development, :test do
+  gem 'pry'
+  gem 'rake'
+  gem 'rspec'
+  gem 'rspec-html-matchers'
+  gem 'rubocop'
+  gem 'vcr'
+  gem 'webmock'
+end
