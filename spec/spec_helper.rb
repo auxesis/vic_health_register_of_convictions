@@ -33,11 +33,14 @@ RSpec.configure do |config|
   config.include_context 'ScraperWiki'
 end
 
-RSpec::Matchers.define :be_url do |expected|
-  # The match method, returns true if valie, false if not.
+RSpec::Matchers.define :be_url do
   match do |actual|
-    # Use the URI library to parse the string, returning false if this fails.
-    URI.parse(actual) rescue false
+    begin
+      # Use the URI to parse the string, returning false if this fails.
+      URI.parse(actual)
+    rescue StandardError
+      false
+    end
   end
 end
 
