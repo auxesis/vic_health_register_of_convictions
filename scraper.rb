@@ -33,22 +33,19 @@ def scrub(text)
   text.strip
 end
 
+def agent
+  @agent ||= Mechanize.new
+end
+
 def save_to_wayback_machine(url)
   debug "Saving #{url} to the Wayback Machine."
-  require 'net/http'
-
   save_url = 'http://web.archive.org/save/' + url
-  uri = URI(save_url)
-
-  Net::HTTP.start(uri.host, uri.port) do |http|
-    request = Net::HTTP::Get.new(uri)
-    response = http.request(request)
-    unless response.is_a? Net::HTTPSuccess
-      info("Attempt to save #{url} to Wayback Machine failed.")
-      info('Exiting!')
-      exit(2)
-    end
-  end
+  agent.get(save_url)
+rescue Mechanize::Error => e
+  info("Attempt to save #{url} to Wayback Machine failed.")
+  info(e.message)
+  info('Exiting!')
+  exit(2)
 end
 
 def get(url)

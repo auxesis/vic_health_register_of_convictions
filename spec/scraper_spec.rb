@@ -40,4 +40,14 @@ describe 'vic_health_register_of_convictions' do
       end
     end
   end
+
+  describe '.get' do
+    it 'saves the page to the Wayback Machine' do
+      VCR.use_cassette('wayback_machine_save') do
+        get(base)
+        expect(WebMock).to have_requested(:get, base)
+        expect(WebMock).to have_requested(:get, 'web.archive.org/save/' + base)
+      end
+    end
+  end
 end
