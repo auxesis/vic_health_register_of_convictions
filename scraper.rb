@@ -158,17 +158,14 @@ end
 def new_convictions
   info "There are #{existing_record_ids.size} existing records that have been scraped"
   info "There are #{convictions_index_at_source.size} records at #{base}"
-  records = convictions_index_at_source.reject do |r|
-    existing_record_ids.include?(r['link'])
-  end
-  info "There are #{records.size} records we haven't seen before at #{base}"
-  records
+  convictions_index_at_source.reject { |r| existing_record_ids.include?(r['link']) }
 end
 
 def main
   # Set an API key if provided
   Geokit::Geocoders::GoogleGeocoder.api_key = ENV['MORPH_GOOGLE_API_KEY'] if ENV['MORPH_GOOGLE_API_KEY']
   records = new_convictions
+  info "There are #{records.size} records we haven't seen before at #{base}"
   # Scrape details new records
   records.map! { |r| build_conviction(r) }
   records.map! { |r| geocode(r) }
