@@ -5,6 +5,8 @@ require 'active_support'
 require 'active_support/core_ext'
 require 'pry'
 require 'reverse_markdown'
+require 'dotenv'
+Dotenv.load
 
 # Set an API key if provided
 Geokit::Geocoders::GoogleGeocoder.api_key = ENV['MORPH_GOOGLE_API_KEY'] if ENV['MORPH_GOOGLE_API_KEY']
@@ -29,17 +31,37 @@ def scrub(text)
   text.strip
 end
 
+def save_to_wayback_machine(url)
+  debug "Saving #{url} to the Wayback Machine."
+  require 'net/http'
+
+  save_url = 'http://web.archive.org/save/' + url
+  uri = URI(save_url)
+
+  Net::HTTP.start(uri.host, uri.port) do |http|
+    request = Net::HTTP::Get.new(uri)
+    response = http.request(request)
+    unless response.kind_of? Net::HTTPSuccess
+      info("Attempt to save #{url} to Wayback Machine failed.")
+      info("Exiting!")
+      exit(2)
+    end
+  end
+end
+
 def get(url)
   @agent ||= Mechanize.new
   @agent.ca_file = './bundle.pem' if File.exists?('./bundle.pem')
   begin
-    @agent.get(url)
+    response = @agent.get(url)
+    save_to_wayback_machine(url)
+    return response
   rescue OpenSSL::SSL::SSLError => e
-    puts "[info] There was an SSL error when performing a HTTP GET to #{url}"
-    puts "[info] The error was: #{e.message}"
-    puts "[info] There's a good chance there's a problem with the certificate bundle."
-    puts "[info] Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au"
-    puts "[info] Exiting!"
+    info "There was an SSL error when performing a HTTP GET to #{url}"
+    info "The error was: #{e.message}"
+    info "There's a good chance there's a problem with the certificate bundle."
+    info "Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au"
+    info "Exiting!"
     exit(2)
   end
 end
@@ -73,10 +95,18 @@ def extract_notices(page)
   notices
 end
 
+def debug(msg)
+  puts '[debug] ' + msg
+end
+
+def info(msg)
+  puts '[info] ' + msg
+end
+
 def build_conviction(conviction)
   page    = get(conviction['link'])
   details = extract_detail(page)
-  puts "Extracting #{details['address']}"
+  debug "Extracting #{conviction['link']}"
 
   conviction.merge!(details)
 end
@@ -85,12 +115,13 @@ def geocode(notice)
   @addresses ||= {}
 
   address = notice['address']
+  link = notice['link']
 
   if @addresses[address]
-    puts "Geocoding [cache hit] #{address}"
+    debug "Geocoding [cache hit] '#{address}' for #{link}"
     location = @addresses[address]
   else
-    puts "Geocoding #{address}"
+    debug "Geocoding '#{address}' for #{link}"
     a = Geokit::Geocoders::GoogleGeocoder.geocode(address)
     location = {
       'lat' => a.lat,
@@ -104,7 +135,7 @@ def geocode(notice)
 end
 
 def base
-  'https://www2.health.vic.gov.au/public-health/food-safety/convictions-register'
+  'https://www2.health.vic.gov.au/about/convictions-register'
 end
 
 def existing_record_ids
@@ -148,9 +179,10 @@ def main
   page = get(base)
 
   convictions = extract_convictions(page)
-  puts "### Found #{convictions.size} convictions"
+  info "There are #{existing_record_ids.size} existing records that have been scraped"
+  info "There are #{convictions.size} records at #{base}"
   new_convictions = convictions.select {|r| !existing_record_ids.include?(r['link']) }
-  puts "### There are #{new_convictions.size} new convictions"
+  info "There are #{new_convictions.size} records we haven't seen before at #{base}"
 
   new_convictions.map! {|c| build_conviction(c) }
   new_convictions.map! {|c| geocode(c) }
@@ -158,7 +190,7 @@ def main
   # Serialise
   ScraperWiki.save_sqlite(['link'], new_convictions)
 
-  puts 'Done'
+  info 'Done'
 end
 
 main()

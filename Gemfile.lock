@@ -19,6 +19,7 @@ GEM
     concurrent-ruby (1.0.5)
     domain_name (0.5.20170404)
       unf (>= 0.0.5, < 1.0.0)
+    dotenv (2.2.1)
     geokit (1.11.0)
     http-cookie (1.0.3)
       domain_name (~> 0.5)
@@ -48,6 +49,7 @@ GEM
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
       slop (~> 3.4)
+    rake (12.1.0)
     reverse_markdown (1.0.3)
       nokogiri
     slop (3.6.0)
@@ -67,9 +69,11 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport
+  dotenv
   geokit
   mechanize
   pry
+  rake
   reverse_markdown
   scraperwiki!
 
@@ -77,4 +81,4 @@ RUBY VERSION
    ruby 2.3.1p112
 
 BUNDLED WITH
-   1.14.6
+   1.16.0.pre.3
