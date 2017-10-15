@@ -5,7 +5,6 @@ require 'mechanize'
 require 'geokit'
 require 'active_support'
 require 'active_support/core_ext'
-require 'pry'
 require 'reverse_markdown'
 require 'dotenv'
 Dotenv.load
