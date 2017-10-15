@@ -49,5 +49,13 @@ describe 'vic_health_register_of_convictions' do
         expect(WebMock).to have_requested(:get, 'web.archive.org/save/' + base)
       end
     end
+
+    context 'when there is a Wayback Machine failure' do
+      it 'exits' do
+        VCR.use_cassette('wayback_machine_save_failure') do
+          expect { get('aesaestoststaestsnt') }.to raise_error(SystemExit)
+        end
+      end
+    end
   end
 end
