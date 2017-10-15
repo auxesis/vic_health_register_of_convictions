@@ -43,9 +43,9 @@ def save_to_wayback_machine(url)
   Net::HTTP.start(uri.host, uri.port) do |http|
     request = Net::HTTP::Get.new(uri)
     response = http.request(request)
-    unless response.kind_of? Net::HTTPSuccess
+    unless response.is_a? Net::HTTPSuccess
       info("Attempt to save #{url} to Wayback Machine failed.")
-      info("Exiting!")
+      info('Exiting!')
       exit(2)
     end
   end
