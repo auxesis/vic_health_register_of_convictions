@@ -148,7 +148,7 @@ rescue SqliteMagic::NoSuchTable
 end
 
 # Index of conviction records
-def convictions_at_source
+def convictions_index_at_source
   return @index if @index
   page = get(base)
   @index = page.search('div.listing-container ol li').map do |el|
@@ -156,12 +156,14 @@ def convictions_at_source
   end
 end
 
-def main
-  # Check for new convictions
+def new_convictions
+  return @new_convictions if @new_convictions
   info "There are #{existing_record_ids.size} existing records that have been scraped"
-  info "There are #{convictions.size} records at #{base}"
-  new_convictions = convictions.reject { |r| existing_record_ids.include?(r['link']) }
-  info "There are #{new_convictions.size} records we haven't seen before at #{base}"
+  info "There are #{convictions_index_at_source.size} records at #{base}"
+  @new_convictions = convictions_index_at_source.reject { |r| existing_record_ids.include?(r['link']) }
+  info "There are #{@new_convictions.size} records we haven't seen before at #{base}"
+  @new_convictions
+end
 
   # Scrape details new records
   new_convictions.map! { |c| build_conviction(c) }
