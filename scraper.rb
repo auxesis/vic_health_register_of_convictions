@@ -165,13 +165,13 @@ def new_convictions
   @new_convictions
 end
 
+def main
+  records = new_convictions
   # Scrape details new records
-  new_convictions.map! { |c| build_conviction(c) }
-  new_convictions.map! { |c| geocode(c) }
-
+  records.map! { |r| build_conviction(r) }
+  records.map! { |r| geocode(r) }
   # Save new records
-  ScraperWiki.save_sqlite(['link'], new_convictions)
-
+  ScraperWiki.save_sqlite(['link'], records)
   info 'Done'
 end
 
