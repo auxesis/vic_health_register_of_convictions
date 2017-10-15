@@ -149,7 +149,8 @@ end
 
 def extract_basic_detail(el)
   conviction = {}
-
+  detail_url = el.search('a').first['href']
+  conviction['link'] = detail_url
   conviction['trading_name'] = el.at('h3').text.strip
   party, address, council = el.search('div.content em').text.split(/\s*\|\s*/)
   conviction['convicted_persons_or_company'] = party
@@ -158,23 +159,12 @@ def extract_basic_detail(el)
   conviction
 end
 
+# Index of conviction records
 def convictions
   return @convictions if @convictions
-  @convictions = []
-
   page = get(base)
-  # Build index of conviction records
   elements = page.search('div.listing-container ol li')
-  elements.each do |el|
-    conviction = extract_basic_detail(el)
-
-    detail_url = el.search('a').first['href']
-    conviction['link'] = detail_url
-
-    @convictions << conviction
-  end
-
-  @convictions
+  @convictions = elements.map { |el| extract_basic_detail(el) }
 end
 
 def main
