@@ -147,24 +147,13 @@ rescue SqliteMagic::NoSuchTable
   []
 end
 
-def extract_basic_detail(el)
-  conviction = {}
-  detail_url = el.search('a').first['href']
-  conviction['link'] = detail_url
-  conviction['trading_name'] = el.at('h3').text.strip
-  party, address, council = el.search('div.content em').text.split(/\s*\|\s*/)
-  conviction['convicted_persons_or_company'] = party
-  conviction['address'] = address
-  conviction['prosecution_brought_by'] = council
-  conviction
-end
-
 # Index of conviction records
-def convictions
-  return @convictions if @convictions
+def convictions_at_source
+  return @index if @index
   page = get(base)
-  elements = page.search('div.listing-container ol li')
-  @convictions = elements.map { |el| extract_basic_detail(el) }
+  @index = page.search('div.listing-container ol li').map do |el|
+    { 'link' => el.search('a').first['href'] }
+  end
 end
 
 def main
