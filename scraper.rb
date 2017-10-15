@@ -49,18 +49,14 @@ rescue Mechanize::Error => e
 end
 
 def get(url)
-  @agent ||= Mechanize.new
-  @agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem')
+  agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem')
   begin
-    response = @agent.get(url)
     save_to_wayback_machine(url)
-    return response
+    agent.get(url)
   rescue OpenSSL::SSL::SSLError => e
-    info "There was an SSL error when performing a HTTP GET to #{url}"
-    info "The error was: #{e.message}"
+    info "There was an SSL error when performing a HTTP GET to #{url}: #{e.message}"
     info %(There's a good chance there's a problem with the certificate bundle.)
     info 'Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au'
-    info 'Exiting!'
     exit(2)
   end
 end
