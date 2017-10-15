@@ -184,10 +184,11 @@ def main
   new_convictions = convictions.reject { |r| existing_record_ids.include?(r['link']) }
   info "There are #{new_convictions.size} records we haven't seen before at #{base}"
 
+  # Scrape details new records
   new_convictions.map! { |c| build_conviction(c) }
   new_convictions.map! { |c| geocode(c) }
 
-  # Serialise
+  # Save new records
   ScraperWiki.save_sqlite(['link'], new_convictions)
 
   info 'Done'
