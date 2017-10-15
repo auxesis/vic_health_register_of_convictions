@@ -113,27 +113,27 @@ def build_conviction(conviction)
   conviction.merge!(details)
 end
 
-def geocode(notice)
-  @addresses ||= {}
-
-  address = notice['address']
-  link = notice['link']
-
-  if @addresses[address]
-    debug "Geocoding [cache hit] '#{address}' for #{link}"
-    location = @addresses[address]
+def geocode_cache(address, value = nil)
+  @cache ||= {}
+  if value
+    @cache[address] = value
   else
-    debug "Geocoding '#{address}' for #{link}"
-    a = Geokit::Geocoders::GoogleGeocoder.geocode(address)
-    location = {
-      'lat' => a.lat,
-      'lng' => a.lng
-    }
+    @cache[address]
+  end
+end
 
-    @addresses[address] = location
+def geocode(record)
+  address = record['address']
+
+  if geocode_cache(address)
+    location = geocode_cache(address)
+  else
+    response = Geokit::Geocoders::GoogleGeocoder.geocode(address)
+    location = { 'lat' => response.lat, 'lng' => response.lng }
+    geocode_cache(address, location)
   end
 
-  notice.merge!(location)
+  record.merge!(location)
 end
 
 def base
@@ -166,6 +166,8 @@ def new_convictions
 end
 
 def main
+  # Set an API key if provided
+  Geokit::Geocoders::GoogleGeocoder.api_key = ENV['MORPH_GOOGLE_API_KEY'] if ENV['MORPH_GOOGLE_API_KEY']
   records = new_convictions
   # Scrape details new records
   records.map! { |r| build_conviction(r) }
