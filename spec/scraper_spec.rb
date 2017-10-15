@@ -58,4 +58,28 @@ describe 'vic_health_register_of_convictions' do
       end
     end
   end
+
+  describe '.scrape_conviction' do
+    let(:record) do
+      {
+        'link' => 'https://www2.health.vic.gov.au/about/convictions-register/register-of-convictions-Malkem-Makhoul'
+      }
+    end
+
+    it 'adds fields to record', :aggregate_failures do
+      VCR.use_cassette('scrape_conviction') do
+        scrape_conviction(record)
+        record.each_value do |value|
+          expect(value).to_not be nil
+        end
+      end
+    end
+
+    it 'converts description to markdown' do
+      VCR.use_cassette('scrape_conviction') do
+        scrape_conviction(record)
+        expect(record['description']).to_not have_tag('li')
+      end
+    end
+  end
 end

@@ -14,6 +14,7 @@ group :development, :test do
   gem 'pry'
   gem 'rake'
   gem 'rspec'
+  gem 'rspec-html-matchers'
   gem 'rubocop'
   gem 'vcr'
   gem 'webmock'

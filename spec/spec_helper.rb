@@ -4,6 +4,7 @@ require_relative('../scraper')
 require 'pry'
 require 'webmock/rspec'
 require 'vcr'
+require 'rspec-html-matchers'
 
 VCR.configure do |c|
   c.cassette_library_dir = 'spec/vcr_cassettes'
@@ -31,6 +32,8 @@ RSpec.configure do |config|
   config.tty = true
   # Set up a clean database for every test
   config.include_context 'ScraperWiki'
+  # HTML matchers for testing Markdown conversion
+  config.include RSpecHtmlMatchers
 end
 
 RSpec::Matchers.define :be_url do
