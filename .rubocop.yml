@@ -2,3 +2,6 @@ Metrics/LineLength:
   Max: 110
   Exclude:
     - 'Gemfile'
+Metrics/BlockLength:
+  Exclude:
+    - spec/*

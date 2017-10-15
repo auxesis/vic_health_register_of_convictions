@@ -23,4 +23,21 @@ describe 'vic_health_register_of_convictions' do
       end
     end
   end
+
+  describe '.geocode' do
+    let(:record) do
+      {
+        'address' => '333 George Street Sydney 2000',
+        'link' => 'https://google.com/'
+      }
+    end
+
+    it 'adds latitude and longitude to record' do
+      VCR.use_cassette('gmaps_geocode_address') do
+        geocode(record)
+        expect(record['lat']).to eq(-33.8668093)
+        expect(record['lng']).to eq(151.2070304)
+      end
+    end
+  end
 end
