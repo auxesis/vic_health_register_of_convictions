@@ -149,20 +149,20 @@ end
 
 # Index of conviction records
 def convictions_index_at_source
-  return @index if @index
   page = get(base)
-  @index = page.search('div.listing-container ol li').map do |el|
+  page.search('div.listing-container ol li').map do |el|
     { 'link' => el.search('a').first['href'] }
   end
 end
 
 def new_convictions
-  return @new_convictions if @new_convictions
   info "There are #{existing_record_ids.size} existing records that have been scraped"
   info "There are #{convictions_index_at_source.size} records at #{base}"
-  @new_convictions = convictions_index_at_source.reject { |r| existing_record_ids.include?(r['link']) }
-  info "There are #{@new_convictions.size} records we haven't seen before at #{base}"
-  @new_convictions
+  records = convictions_index_at_source.reject do |r|
+    existing_record_ids.include?(r['link'])
+  end
+  info "There are #{records.size} records we haven't seen before at #{base}"
+  records
 end
 
 def main
