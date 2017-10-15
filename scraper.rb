@@ -33,11 +33,31 @@ def scrub(text)
   text.strip
 end
 
+def save_to_wayback_machine(url)
+  debug "Saving #{url} to the Wayback Machine."
+  require 'net/http'
+
+  save_url = 'http://web.archive.org/save/' + url
+  uri = URI(save_url)
+
+  Net::HTTP.start(uri.host, uri.port) do |http|
+    request = Net::HTTP::Get.new(uri)
+    response = http.request(request)
+    unless response.kind_of? Net::HTTPSuccess
+      info("Attempt to save #{url} to Wayback Machine failed.")
+      info("Exiting!")
+      exit(2)
+    end
+  end
+end
+
 def get(url)
   @agent ||= Mechanize.new
   @agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem')
   begin
-    @agent.get(url)
+    response = @agent.get(url)
+    save_to_wayback_machine(url)
+    return response
   rescue OpenSSL::SSL::SSLError => e
     info "There was an SSL error when performing a HTTP GET to #{url}"
     info "The error was: #{e.message}"
