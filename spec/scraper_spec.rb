@@ -57,6 +57,17 @@ describe 'vic_health_register_of_convictions' do
         end
       end
     end
+
+    context 'when Wayback Machine is disabled' do
+      before(:each) { set_environment_variable('MORPH_DISABLE_WAYBACK_MACHINE', 'true') }
+      it 'does not make requests to the Wayback Machine' do
+        VCR.use_cassette('wayback_machine_bypass') do
+          get(base)
+          expect(WebMock).to have_requested(:get, base)
+          expect(WebMock).to_not have_requested(:get, 'web.archive.org/save/' + base)
+        end
+      end
+    end
   end
 
   describe '.scrape_conviction' do

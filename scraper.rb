@@ -48,10 +48,14 @@ rescue Mechanize::Error => e
   exit(2)
 end
 
+def disable_wayback_machine?
+  ENV['MORPH_DISABLE_WAYBACK_MACHINE']
+end
+
 def get(url)
   agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem')
   begin
-    save_to_wayback_machine(url)
+    save_to_wayback_machine(url) unless disable_wayback_machine?
     agent.get(url)
   rescue OpenSSL::SSL::SSLError => e
     info "There was an SSL error when performing a HTTP GET to #{url}: #{e.message}"
