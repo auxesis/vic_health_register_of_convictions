@@ -34,7 +34,10 @@ def scrub(text)
 end
 
 def agent
-  @agent ||= Mechanize.new
+  return @agent if @agent
+  @agent = Mechanize.new
+  @agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem')
+  @agent
 end
 
 def save_to_wayback_machine(url)
@@ -53,16 +56,13 @@ def disable_wayback_machine?
 end
 
 def get(url)
-  agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem')
-  begin
-    save_to_wayback_machine(url) unless disable_wayback_machine?
-    agent.get(url)
-  rescue OpenSSL::SSL::SSLError => e
-    info "There was an SSL error when performing a HTTP GET to #{url}: #{e.message}"
-    info %(There's a good chance there's a problem with the certificate bundle.)
-    info 'Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au'
-    exit(2)
-  end
+  save_to_wayback_machine(url) unless disable_wayback_machine?
+  agent.get(url)
+rescue OpenSSL::SSL::SSLError => e
+  info "There was an SSL error when performing a HTTP GET to #{url}: #{e.message}"
+  info %(There's a good chance there's a problem with the certificate bundle.)
+  info 'Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au'
+  exit(2)
 end
 
 def debug(msg)
