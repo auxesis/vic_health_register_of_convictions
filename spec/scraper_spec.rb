@@ -42,6 +42,8 @@ describe 'vic_health_register_of_convictions' do
   end
 
   describe '.get' do
+    before { unset_environment_variable('MORPH_DISABLE_WAYBACK_MACHINE') }
+
     it 'saves the page to the Wayback Machine' do
       VCR.use_cassette('wayback_machine_save') do
         get(base)
@@ -59,7 +61,8 @@ describe 'vic_health_register_of_convictions' do
     end
 
     context 'when Wayback Machine is disabled' do
-      before(:each) { set_environment_variable('MORPH_DISABLE_WAYBACK_MACHINE', 'true') }
+      before { set_environment_variable('MORPH_DISABLE_WAYBACK_MACHINE', 'true') }
+
       it 'does not make requests to the Wayback Machine' do
         VCR.use_cassette('wayback_machine_bypass') do
           get(base)
@@ -68,6 +71,8 @@ describe 'vic_health_register_of_convictions' do
         end
       end
     end
+
+    after { restore_env }
   end
 
   describe '.scrape_conviction' do
