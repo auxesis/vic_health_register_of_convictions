@@ -22,6 +22,16 @@ Then run it:
 bundle exec ruby scraper.rb
 ```
 
+## Configure the scraper on Morph
+
+There are several environment variables you can use to control the behaviour of this scraper when running.
+
+| Environment variable            | Default | Example value                 | Description                                                                                  |
+| ------------------------------- | ------- | ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `MORPH_GOOGLE_API_KEY`          | `nil`   | `AIzFuw3JUPraSP7xBLIh-aa34HD` | Optional API key for talking to the Google Maps API                                          |
+| `MORPH_DISABLE_WAYBACK_MACHINE` | `false` | `true`                        | Controls whether to cache each response on the Wayback Machine                               |
+| `MORPH_USE_CA_BUNDLE`           | `true`  | `false`                       | Controls whether to use the `bundle.pem` cert bundle, or use the certs issued by vic health  |
+
 ## Why is there a custom certificate bundle?
 
 Per the [Qualsys SSL Labs report](https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au), **the intermediate certificate is not sent by the server at www2.health.vic.gov.au**.
