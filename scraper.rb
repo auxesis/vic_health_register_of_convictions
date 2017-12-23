@@ -36,7 +36,7 @@ end
 def agent
   return @agent if @agent
   @agent = Mechanize.new
-  @agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem')
+  @agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem') && use_ca_bundle?
   @agent
 end
 
@@ -49,6 +49,10 @@ rescue Mechanize::Error => e
   info(e.message)
   info('Exiting!')
   exit(2)
+end
+
+def use_ca_bundle?
+  ENV['MORPH_USE_CA_BUNDLE'] != 'false'
 end
 
 def disable_wayback_machine?
