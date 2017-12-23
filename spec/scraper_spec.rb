@@ -55,7 +55,7 @@ describe 'vic_health_register_of_convictions' do
     context 'when there is a Wayback Machine failure' do
       it 'exits' do
         VCR.use_cassette('wayback_machine_save_failure') do
-          expect { get('aesaestoststaestsnt') }.to raise_error(ArgumentError)
+          expect { get('aesaestoststaestsnt') }.to raise_error(SystemExit)
         end
       end
     end
