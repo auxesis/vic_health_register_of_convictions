@@ -55,6 +55,10 @@ def disable_wayback_machine?
   ENV['MORPH_DISABLE_WAYBACK_MACHINE']
 end
 
+def google_api_key
+  ENV['MORPH_GOOGLE_API_KEY']
+end
+
 def get(url)
   save_to_wayback_machine(url) unless disable_wayback_machine?
   agent.get(url)
@@ -149,7 +153,7 @@ end
 
 def main
   # Set an API key if provided
-  Geokit::Geocoders::GoogleGeocoder.api_key = ENV['MORPH_GOOGLE_API_KEY'] if ENV['MORPH_GOOGLE_API_KEY']
+  Geokit::Geocoders::GoogleGeocoder.api_key = google_api_key if google_api_key
   records = new_convictions
   info "There are #{records.size} records we haven't seen before at #{base}"
   # Scrape details new records
