@@ -26,11 +26,12 @@ bundle exec ruby scraper.rb
 
 There are several environment variables you can use to control the behaviour of this scraper when running.
 
-| Environment variable            | Default | Example value                 | Description                                                                                  |
-| ------------------------------- | ------- | ----------------------------- | -------------------------------------------------------------------------------------------- |
-| `MORPH_GOOGLE_API_KEY`          | `nil`   | `AIzFuw3JUPraSP7xBLIh-aa34HD` | Optional API key for talking to the Google Maps API                                          |
-| `MORPH_DISABLE_WAYBACK_MACHINE` | `false` | `true`                        | Controls whether to cache each response on the Wayback Machine                               |
-| `MORPH_USE_CA_BUNDLE`           | `true`  | `false`                       | Controls whether to use the `bundle.pem` cert bundle, or use the certs issued by vic health  |
+| Environment variable            | Default    | Example value                 | Description                                                                                  |
+| ------------------------------- | ---------- | ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `MORPH_GOOGLE_API_KEY`          | `nil`      | `AIzFuw3JUPraSP7xBLIh-aa34HD` | Optional API key for talking to the Google Maps API                                          |
+| `MORPH_DISABLE_WAYBACK_MACHINE` | `false`    | `true`                        | Controls whether to cache each response on the Wayback Machine                               |
+| `MORPH_USE_CA_BUNDLE`           | `true`     | `false`                       | Controls whether to use the `bundle.pem` cert bundle, or use the certs issued by vic health  |
+| `MORPH_SSL_VERSION`             | `TLSv1_2`  | `SSLv23`                      | Sets the SSL version to use without client/server negotiation                                |
 
 ## Why is there a custom certificate bundle?
 

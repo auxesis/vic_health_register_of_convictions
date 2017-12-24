@@ -60,6 +60,7 @@ def config
   @config.configure_from_hash(
     ssl: {
       use_ca_bundle?: ENV['MORPH_USE_CA_BUNDLE'] != 'false',
+      version: ENV['MORPH_SSL_VERSION'] || 'TLSv1_2'
     },
     disable_wayback_machine?: ENV['MORPH_DISABLE_WAYBACK_MACHINE'] == 'true',
     google: {

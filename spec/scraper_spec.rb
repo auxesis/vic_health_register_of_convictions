@@ -121,6 +121,36 @@ describe 'vic_health_register_of_convictions' do
           end
         end
       end
+      describe '.version' do
+        let(:cassette) { 'wayback_machine_save' }
+        context 'no value' do
+          before { unset_environment_variable('MORPH_SSL_VERSION') }
+          it 'defaults to TLS 1.2' do
+            expect(config.ssl.version).to eq('TLSv1_2')
+          end
+        end
+        context 'set to a valid value' do
+          before { set_environment_variable('MORPH_SSL_VERSION', 'SSLv23') }
+          it 'can connect' do
+            expect do
+              VCR.use_cassette(cassette) do
+                agent.get(base)
+              end
+            end.to_not raise_error
+          end
+        end
+        context 'set to an invalid value' do
+          before { set_environment_variable('MORPH_SSL_VERSION', 'blah') }
+          before { WebMock.disable! } # so webmock doesn't give a cached result
+          it 'errors on connect' do
+            expect do
+              VCR.use_cassette(cassette) do
+                agent.get(base)
+              end
+            end.to raise_error(ArgumentError)
+          end
+        end
+      end
     end
     after { restore_env }
   end
