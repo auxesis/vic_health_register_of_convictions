@@ -37,7 +37,8 @@ end
 def agent
   return @agent if @agent
   @agent = Mechanize.new
-  @agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem') && config.use_ca_bundle?
+  @agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem') && config.ssl.use_ca_bundle?
+  @agent.ssl_version = config.ssl.version
   @agent
 end
 
@@ -57,7 +58,9 @@ def config
   return @config if @config&.to_hash&.any?
   @config = Configatron::RootStore.new
   @config.configure_from_hash(
-    use_ca_bundle?: ENV['MORPH_USE_CA_BUNDLE'] != 'false',
+    ssl: {
+      use_ca_bundle?: ENV['MORPH_USE_CA_BUNDLE'] != 'false',
+    },
     disable_wayback_machine?: ENV['MORPH_DISABLE_WAYBACK_MACHINE'] == 'true',
     google: {
       api_key: ENV['MORPH_GOOGLE_API_KEY']

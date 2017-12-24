@@ -100,27 +100,29 @@ describe 'vic_health_register_of_convictions' do
   end
 
   describe 'config' do
-    describe '.use_ca_bundle' do
-      context 'no value' do
-        before { unset_environment_variable('MORPH_USE_CA_BUNDLE') }
-        it 'is enabled' do
-          expect(config.use_ca_bundle?).to be true
+    describe '.ssl' do
+      describe '.use_ca_bundle?' do
+        context 'no value' do
+          before { unset_environment_variable('MORPH_USE_CA_BUNDLE') }
+          it 'is enabled' do
+            expect(config.ssl.use_ca_bundle?).to be true
+          end
+        end
+        context 'set true' do
+          before { set_environment_variable('MORPH_USE_CA_BUNDLE', 'true') }
+          it 'is enabled' do
+            expect(config.ssl.use_ca_bundle?).to be true
+          end
+        end
+        context 'set false' do
+          before { set_environment_variable('MORPH_USE_CA_BUNDLE', 'false') }
+          it 'is disabled' do
+            expect(config.ssl.use_ca_bundle?).to be false
+          end
         end
       end
-      context 'set true' do
-        before { set_environment_variable('MORPH_USE_CA_BUNDLE', 'true') }
-        it 'is enabled' do
-          expect(config.use_ca_bundle?).to be true
-        end
-      end
-      context 'set false' do
-        before { set_environment_variable('MORPH_USE_CA_BUNDLE', 'false') }
-        it 'is disabled' do
-          expect(config.use_ca_bundle?).to be false
-        end
-      end
-      after { restore_env }
     end
+    after { restore_env }
   end
 
   after { config&.reset! }
