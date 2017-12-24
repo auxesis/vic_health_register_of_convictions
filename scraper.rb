@@ -6,6 +6,7 @@ require 'geokit'
 require 'active_support'
 require 'active_support/core_ext'
 require 'reverse_markdown'
+require 'configatron/core'
 require 'dotenv'
 Dotenv.load
 
@@ -36,7 +37,7 @@ end
 def agent
   return @agent if @agent
   @agent = Mechanize.new
-  @agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem') && use_ca_bundle?
+  @agent.ca_file = './bundle.pem' if File.exist?('./bundle.pem') && config.use_ca_bundle?
   @agent
 end
 
@@ -51,23 +52,25 @@ rescue Mechanize::Error => e
   exit(2)
 end
 
-def use_ca_bundle?
-  ENV['MORPH_USE_CA_BUNDLE'] != 'false'
-end
-
-def disable_wayback_machine?
-  ENV['MORPH_DISABLE_WAYBACK_MACHINE']
-end
-
-def google_api_key
-  ENV['MORPH_GOOGLE_API_KEY']
+def config
+  return @config if @config&.to_hash&.any?
+  @config = Configatron::RootStore.new
+  @config.configure_from_hash(
+    use_ca_bundle?: ENV['MORPH_USE_CA_BUNDLE'] != 'false',
+    disable_wayback_machine?: ENV['MORPH_DISABLE_WAYBACK_MACHINE'] == 'true',
+    google: {
+      api_key: ENV['MORPH_GOOGLE_API_KEY']
+    }
+  )
+  @config
 end
 
 def get(url)
-  save_to_wayback_machine(url) unless disable_wayback_machine?
+  save_to_wayback_machine(url) unless config.disable_wayback_machine?
   agent.get(url)
 rescue OpenSSL::SSL::SSLError => e
   info "There was an SSL error when performing a HTTP GET to #{url}: #{e.message}"
+  debug 'This was the backtrace'
   info %(There's a good chance there's a problem with the certificate bundle.)
   info 'Find out what the problem could be at: https://www.ssllabs.com/ssltest/analyze.html?d=www2.health.vic.gov.au'
   exit(2)
@@ -157,7 +160,7 @@ end
 
 def main
   # Set an API key if provided
-  Geokit::Geocoders::GoogleGeocoder.api_key = google_api_key if google_api_key
+  Geokit::Geocoders::GoogleGeocoder.api_key = config.google.api_key
   records = new_convictions
   info "There are #{records.size} records we haven't seen before at #{base}"
   # Scrape details new records

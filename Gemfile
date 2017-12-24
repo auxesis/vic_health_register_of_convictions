@@ -4,6 +4,7 @@ ruby '2.3.1'
 source 'https://rubygems.org'
 
 gem 'activesupport'
+gem 'configatron'
 gem 'dotenv'
 gem 'geokit'
 gem 'mechanize'
