@@ -52,6 +52,7 @@ rescue Mechanize::Error => e
   exit(2)
 end
 
+# rubocop:disable Metrics/MethodLength
 def config
   return @config if @config&.to_hash&.any?
   @config = Configatron::RootStore.new
@@ -62,8 +63,10 @@ def config
       api_key: ENV['MORPH_GOOGLE_API_KEY']
     }
   )
+  debug "Config: #{@config.to_hash}"
   @config
 end
+# rubocop:enable Metrics/MethodLength
 
 def get(url)
   save_to_wayback_machine(url) unless config.disable_wayback_machine?
