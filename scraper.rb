@@ -165,7 +165,23 @@ def new_convictions
   convictions_index_at_source.reject { |r| existing_record_ids.include?(r['link']) }
 end
 
+def test_ssl_methods
+  working = OpenSSL::SSL::SSLContext::METHODS.select do |method|
+    agent = Mechanize.new
+    agent.ssl_version = method
+    debug "Testing SSL method: #{method}"
+    begin
+      agent.get(base)
+    rescue => e
+      false
+    end
+  end
+  debug 'These are the working SSL methods: ' + working.join(', ')
+  exit
+end
+
 def main
+  test_ssl_methods
   # Set an API key if provided
   Geokit::Geocoders::GoogleGeocoder.api_key = config.google.api_key
   records = new_convictions
