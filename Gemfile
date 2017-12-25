@@ -13,6 +13,8 @@ gem 'scraperwiki', git: 'https://github.com/openaustralia/scraperwiki-ruby.git',
 
 group :development, :test do
   gem 'pry'
+  gem 'pry-rescue'
+  gem 'pry-stack_explorer'
   gem 'rake'
   gem 'rspec'
   gem 'rspec-html-matchers'

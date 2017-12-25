@@ -166,17 +166,23 @@ def new_convictions
 end
 
 def test_ssl_methods
-  working = OpenSSL::SSL::SSLContext::METHODS.select do |method|
-    agent = Mechanize.new
+  methods = OpenSSL::SSL::SSLContext::METHODS.reject { |m| m =~ /server|client/ }
+  tests = methods.group_by do |method|
+    uri = URI.parse(base)
+    agent = Net::HTTP.new(uri.host, uri.port)
+    agent.use_ssl = true
     agent.ssl_version = method
-    debug "Testing SSL method: #{method}"
     begin
-      agent.get(base)
+      agent.get(uri.path)
+      debug "Testing SSL method: #{method} OK"
+      true
     rescue => e
+      debug "Testing SSL method: #{method} FAIL #{e}"
       false
     end
   end
-  debug 'These are the working SSL methods: ' + working.join(', ')
+  debug 'These SSL methods work: ' + tests[true].join(', ')
+  debug 'These SSL methods do not work: ' + tests[false].join(', ')
   exit
 end
 
