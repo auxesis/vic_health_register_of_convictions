@@ -169,11 +169,15 @@ def test_ssl_methods
   methods = OpenSSL::SSL::SSLContext::METHODS.reject { |m| m =~ /server|client/ }
   tests = methods.group_by do |method|
     uri = URI.parse(base)
-    agent = Net::HTTP.new(uri.host, uri.port)
-    agent.use_ssl = true
-    agent.ssl_version = method
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.ssl_version = method
+    http.set_debug_output($stderr) if config.ssl.debug == true
+    http.ca_file = './bundle.pem' if File.exist?('./bundle.pem') && config.ssl.use_ca_bundle?
+    http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+    http.verify_depth = 5
     begin
-      agent.get(uri.path)
+      http.get(uri.path)
       debug "Testing SSL method: #{method} OK"
       true
     rescue => e
