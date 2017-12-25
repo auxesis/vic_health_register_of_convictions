@@ -181,8 +181,8 @@ def test_ssl_methods
       false
     end
   end
-  debug 'These SSL methods work: ' + tests[true].join(', ')
-  debug 'These SSL methods do not work: ' + tests[false].join(', ')
+  debug 'These SSL methods work: ' + tests[true]&.join(', ')
+  debug 'These SSL methods do not work: ' + tests[false]&.join(', ')
   exit
 end
 
