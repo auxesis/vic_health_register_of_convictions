@@ -187,11 +187,28 @@ def test_ssl_methods
   end
   debug "These SSL methods work: #{tests[true]&.join(', ')}"
   debug "These SSL methods do not work: #{tests[false]&.join(', ')}"
-  exit
+end
+
+def test_curl_ssl_methods
+  methods = %w[--tlsv1 --tlsv1.1 --tlsv1.2 --sslv2 --sslv3]
+  methods.each do |method|
+    command = %w[curl -vv]
+    # command << "--proxy http://localhost:8080/ --capath ~/.mitmproxy/"
+    command << "-o /dev/null"
+    command << method
+    command << base
+    cmd = command.join(' ')
+    debug ''
+    debug "#### #{method} ####"
+    debug ''
+    system(cmd)
+  end
 end
 
 def main
-  test_ssl_methods
+  #test_ssl_methods
+  test_curl_ssl_methods
+  exit
   # Set an API key if provided
   Geokit::Geocoders::GoogleGeocoder.api_key = config.google.api_key
   records = new_convictions
